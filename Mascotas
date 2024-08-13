@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_contact"
+        android:title="Contacto" />
+    <item
+        android:id="@+id/menu_about"
+        android:title="Acerca De" />
+</menu>
+override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.menu_main, menu)
+    return true
+}
+
+override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    return when (item.itemId) {
+        R.id.menu_contact -> {
+            // Abrir la actividad de contacto
+            startActivity(Intent(this, ContactActivity::class.java))
+            true
+        }
+        R.id.menu_about -> {
+            // Abrir la actividad Acerca De
+            startActivity(Intent(this, AboutActivity::class.java))
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
+}
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ContactActivity">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/editTextName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/editTextEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editTextName"
+        android:hint="Correo" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/editTextMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editTextEmail"
+        android:hint="Mensaje"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/buttonSend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enviar Comentario"
+        android:layout_below="@id/editTextMessage"
+        android:layout_centerHorizontal="true" />
+</RelativeLayout>
+class ContactActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_contact)
+
+        val sendButton = findViewById<Button>(R.id.buttonSend)
+        sendButton.setOnClickListener {
+            val name = findViewById<EditText>(R.id.editTextName).text.toString()
+            val email = findViewById<EditText>(R.id.editTextEmail).text.toString()
+            val message = findViewById<EditText>(R.id.editTextMessage).text.toString()
+
+            // Implementa el envío de email con JavaMail aquí
+        }
+    }
+}
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".AboutActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bio del Desarrollador"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Aquí va la biografía del desarrollador."
+        android:layout_below="@id/textViewBio"
+        android:layout_margin="16dp" />
+</RelativeLayout>
+class AboutActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_about)
+    }
+}
+class ContactFragment : Fragment() {
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_contact, container, false)
+    }
+}
+class AboutFragment : Fragment() {
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_about, container, false)
+    }
+}
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".PetProfileFragment">
+
+    <ImageView
+        android:id="@+id/imageViewProfile"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:src="@drawable/ic_pet" />
+
+    <TextView
+        android:id="@+id/textViewPetName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nombre de la Mascota"
+        android:layout_margin="16dp"
+        android:textSize="24sp" />
+
+    <RecyclerView
+        android:id="@+id/recyclerViewPetPhotos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="16dp" />
+</LinearLayout>
+class PetProfileFragment : Fragment() {
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_pet_profile, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewPetPhotos)
+        recyclerView.layoutManager = GridLayoutManager(context, 3)
+        recyclerView.adapter = PetPhotosAdapter(generateDummyPetPhotos())
+    }
+
+    private fun generateDummyPetPhotos(): List<PetPhoto> {
+        // Genera datos dummy para las fotos de la mascota
+        return listOf(
+            PetPhoto(R.drawable.ic_pet, 10),
+            PetPhoto(R.drawable.ic_pet, 5),
+            // Agrega más fotos aquí
+        )
+    }
+}
+class PetPhotosAdapter(private val photos: List<PetPhoto>) :
+    RecyclerView.Adapter<PetPhotosAdapter.PetPhotoViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PetPhotoViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_pet_photo, parent, false)
+        return PetPhotoViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: PetPhotoViewHolder, position: Int) {
+        val petPhoto = photos[position]
+        holder.imageView.setImageResource(petPhoto.imageResId)
+        holder.ratingTextView.text = petPhoto.rating.toString()
+    }
+
+    override fun getItemCount(): Int = photos.size
+
+    class PetPhotoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView
