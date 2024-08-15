@@ -1,0 +1,125 @@
+data class Mascota(
+    val id: Int,  // Identificador único
+    val nombre: String,
+    val foto: Int,  // Recurso de la imagen
+    var rating: Int  // Cantidad de huesos (rating)
+)
+class MascotaDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+
+    companion object {
+        private const val DATABASE_NAME = "mascotas.db"
+        private const val DATABASE_VERSION = 1
+
+        private const val TABLE_MASCOTA = "mascota"
+        private const val COLUMN_ID = "id"
+        private const val COLUMN_NOMBRE = "nombre"
+        private const val COLUMN_FOTO = "foto"
+        private const val COLUMN_RATING = "rating"
+    }
+
+    override fun onCreate(db: SQLiteDatabase) {
+        val createTable = """
+            CREATE TABLE $TABLE_MASCOTA (
+                $COLUMN_ID INTEGER PRIMARY KEY,
+                $COLUMN_NOMBRE TEXT NOT NULL,
+                $COLUMN_FOTO INTEGER NOT NULL,
+                $COLUMN_RATING INTEGER NOT NULL
+            )
+        """
+        db.execSQL(createTable)
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        db.execSQL("DROP TABLE IF EXISTS $TABLE_MASCOTA")
+        onCreate(db)
+    }
+
+    fun insertMascota(mascota: Mascota) {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_ID, mascota.id)
+            put(COLUMN_NOMBRE, mascota.nombre)
+            put(COLUMN_FOTO, mascota.foto)
+            put(COLUMN_RATING, mascota.rating)
+        }
+        db.insert(TABLE_MASCOTA, null, values)
+    }
+
+    fun getLast5Mascotas(): List<Mascota> {
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_MASCOTA,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "$COLUMN_ID DESC",
+            "5"
+        )
+
+        val mascotas = mutableListOf<Mascota>()
+        with(cursor) {
+            while (moveToNext()) {
+                val id = getInt(getColumnIndexOrThrow(COLUMN_ID))
+                val nombre = getString(getColumnIndexOrThrow(COLUMN_NOMBRE))
+                val foto = getInt(getColumnIndexOrThrow(COLUMN_FOTO))
+                val rating = getInt(getColumnIndexOrThrow(COLUMN_RATING))
+                mascotas.add(Mascota(id, nombre, foto, rating))
+            }
+        }
+        cursor.close()
+        return mascotas
+    }
+
+    fun deleteOldestMascota() {
+        val db = writableDatabase
+        db.execSQL("DELETE FROM $TABLE_MASCOTA WHERE $COLUMN_ID = (SELECT MIN($COLUMN_ID) FROM $TABLE_MASCOTA)")
+    }
+}
+class MascotaAdapter(private val mascotas: List<Mascota>, private val dbHelper: MascotaDbHelper) :
+    RecyclerView.Adapter<MascotaAdapter.MascotaViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MascotaViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_mascota, parent, false)
+        return MascotaViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: MascotaViewHolder, position: Int) {
+        val mascota = mascotas[position]
+        holder.bind(mascota)
+
+        holder.itemView.findViewById<ImageView>(R.id.ratingBone).setOnClickListener {
+            mascota.rating++
+            dbHelper.insertMascota(mascota)
+            if (dbHelper.getLast5Mascotas().size > 5) {
+                dbHelper.deleteOldestMascota()
+            }
+            notifyDataSetChanged()
+        }
+    }
+
+    override fun getItemCount(): Int = mascotas.size
+
+    class MascotaViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(mascota: Mascota) {
+            itemView.findViewById<TextView>(R.id.mascotaName).text = mascota.nombre
+            itemView.findViewById<ImageView>(R.id.mascotaImage).setImageResource(mascota.foto)
+            itemView.findViewById<TextView>(R.id.mascotaRating).text = mascota.rating.toString()
+        }
+    }
+}
+class FavoritasActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_favoritas)
+
+        val dbHelper = MascotaDbHelper(this)
+        val mascotasFavoritas = dbHelper.getLast5Mascotas()
+
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewFavoritas)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = MascotaAdapter(mascotasFavoritas, dbHelper)
+    }
+}
